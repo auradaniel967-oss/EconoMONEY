@@ -1,0 +1,915 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f5f7f8;
+    color: #17201b;
+    line-height: 1.6;
+}
+
+
+/* =====================================================
+   CABEÇALHO
+===================================================== */
+
+header {
+    width: 100%;
+    padding: 20px 6%;
+    background: #0b1711;
+    color: white;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.logo span {
+    color: #55d68a;
+}
+
+nav {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+nav a {
+    color: #ffffff;
+    text-decoration: none;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    padding: 8px 10px;
+    border-radius: 8px;
+
+    transition: 0.25s;
+}
+
+nav a:hover {
+    background: #55d68a;
+    color: #07110b;
+}
+
+
+/* =====================================================
+   HERO
+===================================================== */
+
+.hero {
+    min-height: 650px;
+
+    padding: 90px 8%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 60px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0b1711,
+            #10291c
+        );
+
+    color: white;
+}
+
+.hero-text {
+    max-width: 720px;
+}
+
+.tag {
+    display: inline-block;
+
+    padding: 8px 14px;
+
+    border: 1px solid #55d68a;
+    border-radius: 30px;
+
+    color: #55d68a;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    letter-spacing: 1.5px;
+
+    margin-bottom: 22px;
+}
+
+.hero h1 {
+    font-size: clamp(45px, 6vw, 82px);
+
+    line-height: 0.98;
+
+    margin-bottom: 28px;
+
+    letter-spacing: -3px;
+}
+
+.hero h1 span {
+    color: #55d68a;
+}
+
+.hero p {
+    max-width: 650px;
+
+    color: #d3ded7;
+
+    font-size: 18px;
+
+    margin-bottom: 16px;
+}
+
+.button {
+    display: inline-block;
+
+    margin-top: 20px;
+
+    padding: 15px 25px;
+
+    border-radius: 10px;
+
+    background: #55d68a;
+    color: #07110b;
+
+    text-decoration: none;
+
+    font-weight: 900;
+
+    transition: 0.25s;
+}
+
+.button:hover {
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 10px 25px rgba(85,214,138,0.25);
+}
+
+.hero-card {
+    width: 330px;
+    min-width: 280px;
+
+    padding: 45px 30px;
+
+    text-align: center;
+
+    border-radius: 25px;
+
+    background:
+        rgba(255,255,255,0.07);
+
+    border:
+        1px solid rgba(255,255,255,0.12);
+
+    backdrop-filter: blur(10px);
+
+    box-shadow:
+        0 25px 60px rgba(0,0,0,0.25);
+}
+
+.money-icon {
+    font-size: 75px;
+    margin-bottom: 15px;
+}
+
+.hero-card h2 {
+    font-size: 26px;
+    margin-bottom: 10px;
+}
+
+.hero-card p {
+    font-size: 15px;
+    margin: 0;
+}
+
+
+/* =====================================================
+   SEÇÕES
+===================================================== */
+
+.section {
+    padding: 90px 8%;
+}
+
+.section.dark {
+    background: #0e1b14;
+    color: white;
+}
+
+.section-title {
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+
+    margin-bottom: 45px;
+}
+
+.section-title span {
+    color: #55d68a;
+
+    font-size: 14px;
+
+    font-weight: 900;
+
+    letter-spacing: 2px;
+}
+
+.section-title h2 {
+    font-size: clamp(30px, 4vw, 50px);
+
+    line-height: 1.1;
+
+    letter-spacing: -1px;
+}
+
+.text {
+    max-width: 850px;
+
+    margin: auto;
+}
+
+.text p {
+    font-size: 17px;
+
+    margin-bottom: 20px;
+
+    color: #46524b;
+}
+
+.dark .text p {
+    color: #cbd6cf;
+}
+
+.text h3 {
+    font-size: 22px;
+
+    margin-top: 30px;
+    margin-bottom: 8px;
+}
+
+.text ul {
+    padding-left: 25px;
+}
+
+.text li {
+    margin-bottom: 14px;
+    font-size: 17px;
+}
+
+
+/* =====================================================
+   CARDS
+===================================================== */
+
+.cards {
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(230px, 1fr));
+
+    gap: 22px;
+}
+
+.card {
+    padding: 30px;
+
+    border-radius: 18px;
+
+    background: #14251b;
+
+    border: 1px solid rgba(255,255,255,0.07);
+
+    transition: 0.3s;
+
+    color: white;
+}
+
+.card:hover {
+    transform: translateY(-7px);
+
+    box-shadow:
+        0 18px 40px rgba(0,0,0,0.2);
+}
+
+.card.light {
+    background: white;
+
+    color: #17201b;
+
+    border: 1px solid #e1e7e3;
+
+    box-shadow:
+        0 8px 30px rgba(0,0,0,0.05);
+}
+
+.card.light p {
+    color: #59635d;
+}
+
+.icon {
+    font-size: 38px;
+
+    margin-bottom: 15px;
+}
+
+.card h3 {
+    font-size: 21px;
+
+    margin-bottom: 10px;
+}
+
+.card p {
+    color: #c6d2ca;
+
+    font-size: 15px;
+}
+
+.card strong {
+    display: block;
+
+    margin-top: 20px;
+
+    color: #55d68a;
+
+    font-size: 13px;
+}
+
+.link-card {
+    text-decoration: none;
+
+    cursor: pointer;
+}
+
+
+/* =====================================================
+   OBJETIVO / DESTAQUE
+===================================================== */
+
+.goal {
+    max-width: 850px;
+
+    margin: 30px auto 0;
+
+    padding: 35px;
+
+    border-radius: 18px;
+
+    background: #14251b;
+
+    border-left: 5px solid #55d68a;
+}
+
+.goal h3 {
+    margin-bottom: 12px;
+
+    font-size: 23px;
+}
+
+.goal p {
+    color: #cbd6cf;
+
+    margin-bottom: 10px;
+}
+
+.progress {
+    width: 100%;
+
+    height: 14px;
+
+    margin-top: 25px;
+
+    background: #263a2e;
+
+    border-radius: 50px;
+
+    overflow: hidden;
+}
+
+.progress div {
+    height: 100%;
+
+    background: #55d68a;
+
+    border-radius: 50px;
+}
+
+.progress-text {
+    margin-top: 10px;
+
+    font-weight: 800;
+
+    color: #55d68a !important;
+}
+
+
+/* =====================================================
+   CHECKLIST
+===================================================== */
+
+.checklist {
+    max-width: 850px;
+
+    margin: auto;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 14px;
+}
+
+.checklist label {
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+    padding: 18px 20px;
+
+    background: #14251b;
+
+    border: 1px solid rgba(255,255,255,0.08);
+
+    border-radius: 12px;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.checklist label:hover {
+    border-color: #55d68a;
+}
+
+.checklist input {
+    width: 20px;
+    height: 20px;
+
+    accent-color: #55d68a;
+}
+
+
+/* =====================================================
+   ÁREA DE VÍDEO
+===================================================== */
+
+.video-section {
+    width: 100%;
+
+    padding: 100px 8%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #07110b,
+            #10291c
+        );
+
+    color: white;
+}
+
+.video-header {
+    width: 100%;
+    max-width: 850px;
+
+    margin: 0 auto 45px;
+
+    text-align: center;
+}
+
+.video-tag {
+    display: inline-block;
+
+    padding: 8px 14px;
+
+    border: 1px solid #55d68a;
+
+    border-radius: 30px;
+
+    color: #55d68a;
+
+    font-size: 12px;
+
+    font-weight: 900;
+
+    letter-spacing: 1.5px;
+
+    margin-bottom: 20px;
+}
+
+.video-header h2 {
+    font-size: clamp(35px, 5vw, 60px);
+
+    line-height: 1;
+
+    margin-bottom: 20px;
+}
+
+.video-header h2 span {
+    color: #55d68a;
+}
+
+.video-header p {
+    color: #cbd6cf;
+
+    font-size: 17px;
+}
+
+
+/* =====================================================
+   CARD DO VÍDEO
+===================================================== */
+
+.video-card {
+    width: 100%;
+    max-width: 1100px;
+
+    margin: auto;
+
+    border-radius: 22px;
+
+    overflow: hidden;
+
+    background: #111c16;
+
+    border: 1px solid rgba(255,255,255,0.1);
+
+    box-shadow:
+        0 30px 70px rgba(0,0,0,0.35);
+}
+
+
+/* =====================================================
+   VÍDEO
+   NÃO FORÇA 16:9
+   MOSTRA A PROPORÇÃO ORIGINAL
+===================================================== */
+
+.video-screen {
+    width: 100%;
+    height: auto;
+
+    background: #000;
+
+    display: block;
+
+    overflow: visible;
+
+    position: relative;
+}
+
+.video-screen video {
+    display: block;
+
+    width: 100%;
+    height: auto;
+
+    max-width: 100%;
+
+    object-fit: contain;
+
+    background: #000;
+
+    border: 0;
+    outline: 0;
+
+    margin: 0;
+    padding: 0;
+}
+
+
+/* =====================================================
+   PLACEHOLDER
+===================================================== */
+
+.video-placeholder {
+    text-align: center;
+
+    padding: 30px;
+}
+
+.play-button {
+    width: 90px;
+    height: 90px;
+
+    margin: 0 auto 22px;
+
+    border-radius: 50%;
+
+    background: #55d68a;
+
+    color: #07110b;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 32px;
+
+    padding-left: 5px;
+
+    box-shadow:
+        0 0 0 10px rgba(85,214,138,0.12),
+        0 15px 40px rgba(0,0,0,0.3);
+}
+
+.video-placeholder h3 {
+    font-size: 25px;
+
+    margin-bottom: 8px;
+}
+
+.video-placeholder p {
+    color: #b7c5bc;
+}
+
+
+/* =====================================================
+   INFORMAÇÕES DO VÍDEO
+===================================================== */
+
+.video-info {
+    width: 100%;
+
+    padding: 28px 32px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 30px;
+}
+
+.video-number {
+    color: #55d68a;
+
+    font-size: 11px;
+
+    font-weight: 900;
+
+    letter-spacing: 2px;
+}
+
+.video-info h3 {
+    font-size: 25px;
+
+    margin: 5px 0;
+}
+
+.video-info p {
+    color: #aebbb3;
+
+    max-width: 650px;
+}
+
+.video-status {
+    padding: 12px 18px;
+
+    border: 1px solid #55d68a;
+
+    border-radius: 8px;
+
+    color: #55d68a;
+
+    font-size: 12px;
+
+    font-weight: 900;
+
+    white-space: nowrap;
+}
+
+.video-note {
+    width: 100%;
+    max-width: 1100px;
+
+    margin: 20px auto 0;
+
+    padding: 18px 20px;
+
+    border-radius: 12px;
+
+    background: rgba(85,214,138,0.08);
+
+    border: 1px solid rgba(85,214,138,0.15);
+
+    color: #cbd6cf;
+
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   RODAPÉ
+===================================================== */
+
+footer {
+    padding: 55px 8%;
+
+    text-align: center;
+
+    background: #07110b;
+
+    color: white;
+}
+
+footer h2 {
+    color: #55d68a;
+
+    margin-bottom: 10px;
+}
+
+footer p {
+    color: #aebbb3;
+}
+
+footer .copyright {
+    margin-top: 25px;
+
+    font-size: 13px;
+
+    color: #68766e;
+}
+
+
+/* =====================================================
+   RESPONSIVIDADE
+===================================================== */
+
+@media (max-width: 950px) {
+
+    header {
+        flex-direction: column;
+
+        gap: 18px;
+    }
+
+    nav {
+        justify-content: center;
+    }
+
+    .hero {
+        flex-direction: column;
+
+        text-align: center;
+
+        padding-top: 70px;
+    }
+
+    .hero-text {
+        max-width: 800px;
+    }
+
+    .hero-card {
+        width: min(100%, 380px);
+    }
+
+    .hero p {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .video-section {
+        padding-left: 5%;
+        padding-right: 5%;
+    }
+
+    .video-card {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+
+/* =====================================================
+   CELULAR
+===================================================== */
+
+@media (max-width: 650px) {
+
+    header {
+        padding: 18px 5%;
+    }
+
+    nav a {
+        font-size: 11px;
+
+        padding: 6px 7px;
+    }
+
+    .hero {
+        padding: 65px 6%;
+    }
+
+    .hero h1 {
+        font-size: 46px;
+    }
+
+    .section,
+    .video-section {
+        padding: 65px 6%;
+    }
+
+    .section-title {
+        align-items: flex-start;
+    }
+
+    .video-card {
+        width: 100%;
+        max-width: 100%;
+
+        border-radius: 14px;
+    }
+
+    .video-screen {
+        width: 100%;
+        height: auto;
+
+        aspect-ratio: auto;
+    }
+
+    .video-screen video {
+        width: 100%;
+        height: auto;
+
+        object-fit: contain;
+    }
+
+    .video-info {
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        padding: 22px;
+    }
+
+    .video-status {
+        width: 100%;
+
+        text-align: center;
+    }
+
+    .video-placeholder h3 {
+        font-size: 20px;
+    }
+}
+
+
+/* =====================================================
+   CELULARES PEQUENOS
+===================================================== */
+
+@media (max-width: 400px) {
+
+    .video-section {
+        padding-left: 4%;
+        padding-right: 4%;
+    }
+
+    .video-card {
+        border-radius: 10px;
+    }
+
+    .video-info {
+        padding: 18px;
+    }
+
+    .video-info h3 {
+        font-size: 21px;
+    }
+}
+
+E no index.html, apague aquele <style> que estava dentro do <head>, porque agora a configuração do vídeo está toda no style.css.

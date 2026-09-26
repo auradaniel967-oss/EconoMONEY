@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+
+<head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Calculadora de Metas | EconoMONEY</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+    .goal-page {
+        min-height: 100vh;
+        padding: 80px 8%;
+        background: linear-gradient(135deg, #07110b, #10291c);
+    }
+
+    .goal-header {
+        max-width: 850px;
+        margin: 0 auto 45px;
+        text-align: center;
+        color: white;
+    }
+
+    .goal-header h1 {
+        font-size: clamp(40px, 6vw, 65px);
+        line-height: 1;
+        margin: 20px 0;
+    }
+
+    .goal-header h1 span {
+        color: #55d68a;
+    }
+
+    .goal-header p {
+        color: #cbd6cf;
+        font-size: 17px;
+        line-height: 1.6;
+    }
+
+    .goal-box {
+        max-width: 850px;
+        margin: auto;
+        padding: 40px;
+        background: white;
+        border-radius: 25px;
+        box-shadow: 0 30px 70px rgba(0,0,0,0.3);
+    }
+
+    .goal-box h2 {
+        color: #17201b;
+        margin-bottom: 25px;
+    }
+
+    .input-group {
+        margin-bottom: 20px;
+    }
+
+    .input-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 800;
+        color: #26342b;
+    }
+
+    .input-group input {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #e0e7e2;
+        border-radius: 10px;
+        font-size: 17px;
+        outline: none;
+    }
+
+    .input-group input:focus {
+        border-color: #55d68a;
+    }
+
+    .goal-button {
+        width: 100%;
+        border: none;
+        padding: 17px;
+        margin-top: 10px;
+        border-radius: 10px;
+        background: #10291c;
+        color: white;
+        font-size: 16px;
+        font-weight: 900;
+        cursor: pointer;
+        transition: .2s;
+    }
+
+    .goal-button:hover {
+        background: #55d68a;
+        color: #07110b;
+        transform: translateY(-2px);
+    }
+
+    .goal-results {
+        display: none;
+        margin-top: 35px;
+        padding-top: 30px;
+        border-top: 2px solid #e7ece9;
+    }
+
+    .result-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+    }
+
+    .result-card {
+        padding: 22px;
+        border-radius: 15px;
+        background: #f1f6f3;
+    }
+
+    .result-card small {
+        display: block;
+        color: #657168;
+        margin-bottom: 5px;
+    }
+
+    .result-card strong {
+        font-size: 24px;
+        color: #10291c;
+    }
+
+    .highlight {
+        background: #10291c;
+    }
+
+    .highlight small {
+        color: #bcd0c2;
+    }
+
+    .highlight strong {
+        color: #55d68a;
+    }
+
+    .extra-results {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .extra-card {
+        padding: 18px;
+        border-radius: 14px;
+        background: #f7faf8;
+        border: 1px solid #e1e9e4;
+    }
+
+    .extra-card span {
+        display: block;
+        color: #657168;
+        font-size: 13px;
+        margin-bottom: 6px;
+    }
+
+    .extra-card strong {
+        color: #17201b;
+        font-size: 19px;
+    }
+
+    .goal-message {
+        margin-top: 20px;
+        padding: 18px;
+        border-radius: 12px;
+        background: #eef7f1;
+        color: #23402d;
+        font-weight: 700;
+        text-align: center;
+        line-height: 1.6;
+    }
+
+    .goal-message.warning {
+        background: #fff7e6;
+        color: #704b00;
+    }
+
+    .goal-message.success {
+        background: #e8f8ee;
+        color: #176b35;
+    }
+
+    .goal-message.error {
+        background: #fdecec;
+        color: #8a2020;
+    }
+
+    .back-button {
+        display: block;
+        width: fit-content;
+        margin: 30px auto 0;
+        padding: 13px 20px;
+        border-radius: 9px;
+        background: #55d68a;
+        color: #07110b;
+        text-decoration: none;
+        font-weight: 900;
+        transition: .2s;
+    }
+
+    .back-button:hover {
+        transform: translateY(-2px);
+    }
+
+    .tip {
+        margin-top: 25px;
+        padding: 18px;
+        border-radius: 12px;
+        background: #f1f6f3;
+        color: #334238;
+        line-height: 1.6;
+    }
+
+    @media (max-width: 600px) {
+
+        .goal-page {
+            padding: 55px 5%;
+        }
+
+        .goal-box {
+            padding: 25px;
+        }
+
+        .goal-header h1 {
+            font-size: 42px;
+        }
+
+    }
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<div class="logo">
+    💰 ECONO<span>MONEY</span>
+</div>
+
+<nav>
+
+    <a href="index.html">Início</a>
+    <a href="planejamento.html">Planejamento</a>
+    <a href="necessidades.html">Necessidades</a>
+    <a href="lazer.html">Lazer</a>
+    <a href="compras.html">Compras</a>
+    <a href="controle-gastos.html">Gastos</a>
+    <a href="poupanca.html">Poupança</a>
+    <a href="investimentos.html">Investimentos</a>
+    <a href="metas.html">Metas</a>
+    <a href="seguranca.html">Segurança</a>
+    <a href="empregos.html">💼 Empregos</a>
+
+</nav>
+
+</header>
+
+<main>
+
+<section class="goal-page">
+
+<div class="goal-header">
+
+    <div class="tag">
+        🎯 FERRAMENTA FINANCEIRA
+    </div>
+
+    <h1>
+        Calculadora de
+        <span>Metas.</span>
+    </h1>
+
+    <p>
+        Transforme um objetivo em um plano.
+        Descubra quanto falta, quanto guardar por mês,
+        por semana e aproximadamente por dia.
+    </p>
+
+</div>
+
+
+<div class="goal-box">
+
+    <h2>
+        🎯 Defina sua meta
+    </h2>
+
+
+    <div class="input-group">
+
+        <label for="meta">
+            Quanto você precisa para alcançar a meta?
+        </label>
+
+        <input
+            type="number"
+            id="meta"
+            placeholder="Ex.: 1000"
+            min="0"
+            step="0.01">
+
+    </div>
+
+
+    <div class="input-group">
+
+        <label for="atual">
+            Quanto você já possui?
+        </label>
+
+        <input
+            type="number"
+            id="atual"
+            placeholder="Ex.: 200"
+            min="0"
+            step="0.01">
+
+    </div>
+
+
+    <div class="input-group">
+
+        <label for="meses">
+            Em quantos meses você quer alcançar?
+        </label>
+
+        <input
+            type="number"
+            id="meses"
+            placeholder="Ex.: 8"
+            min="1"
+            step="1">
+
+    </div>
+
+
+    <button
+        class="goal-button"
+        onclick="calcularMeta()">
+
+        🎯 CALCULAR MEU PLANO
+
+    </button>
+
+
+    <div
+        class="goal-results"
+        id="goalResults">
+
+        <h2>
+            📊 Seu planejamento
+        </h2>
+
+
+        <div class="result-cards">
+
+            <div class="result-card">
+
+                <small>
+                    Valor da meta
+                </small>
+
+                <strong id="valorMeta">
+                    R$ 0,00
+                </strong>
+
+            </div>
+
+
+            <div class="result-card">
+
+                <small>
+                    Falta alcançar
+                </small>
+
+                <strong id="falta">
+                    R$ 0,00
+                </strong>
+
+            </div>
+
+
+            <div class="result-card highlight">
+
+                <small>
+                    Guardar por mês
+                </small>
+
+                <strong id="porMes">
+                    R$ 0,00
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="extra-results">
+
+            <div class="extra-card">
+
+                <span>
+                    Aproximadamente por semana
+                </span>
+
+                <strong id="porSemana">
+                    R$ 0,00
+                </strong>
+
+            </div>
+
+
+            <div class="extra-card">
+
+                <span>
+                    Aproximadamente por dia
+                </span>
+
+                <strong id="porDia">
+                    R$ 0,00
+                </strong>
+
+            </div>
+
+
+            <div class="extra-card">
+
+                <span>
+                    Percentual já alcançado
+                </span>
+
+                <strong id="percentualMeta">
+                    0%
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div
+            class="goal-message"
+            id="goalMessage">
+        </div>
+
+
+        <div class="tip">
+
+            💡 <strong>Como usar essa informação?</strong>
+
+            <br><br>
+
+            O valor calculado é uma referência matemática.
+            Antes de definir quanto guardar, compare esse valor
+            com sua renda, seus gastos e outras metas.
+
+            <br><br>
+
+            Se o valor mensal ficar muito alto, uma alternativa
+            é aumentar o prazo ou dividir a meta em etapas.
+
+        </div>
+
+    </div>
+
+
+    <a
+        href="index.html"
+        class="back-button">
+
+        ← VOLTAR AO INÍCIO
+
+    </a>
+
+</div>
+
+</section>
+
+</main>
+
+<footer>
+
+<h2>
+    💰 ECONO<span>MONEY</span>
+</h2>
+
+<p>
+    Educação financeira de forma simples.
+</p>
+
+<p class="copyright">
+    © 2026 EconoMONEY
+</p>
+
+</footer>
+
+<script> function dinheiro(numero) { return Number(numero || 0).toLocaleString( "pt-BR", { style: "currency", currency: "BRL" } ); } function calcularMeta() { const meta = parseFloat( document.getElementById("meta").value ) || 0; const atual = parseFloat( document.getElementById("atual").value ) || 0; const meses = parseInt( document.getElementById("meses").value ) || 0; const resultados = document.getElementById("goalResults"); const mensagem = document.getElementById("goalMessage"); resultados.style.display = "block"; mensagem.className = "goal-message"; if (meta <= 0 || meses <= 0 || atual < 0) { mensagem.classList.add("error"); mensagem.innerHTML = "⚠️ Informe uma meta maior que zero, um valor atual válido e uma quantidade de meses maior que zero."; return; } const falta = Math.max(meta - atual, 0); const porMes = falta / meses; const porSemana = porMes / 4.33; const porDia = porMes / 30; const percentual = Math.min((atual / meta) * 100, 100); document.getElementById( "valorMeta" ).textContent = dinheiro(meta); document.getElementById( "falta" ).textContent = dinheiro(falta); document.getElementById( "porMes" ).textContent = dinheiro(porMes); document.getElementById( "porSemana" ).textContent = dinheiro(porSemana); document.getElementById( "porDia" ).textContent = dinheiro(porDia); document.getElementById( "percentualMeta" ).textContent = percentual.toFixed(1) + "%"; if (atual >= meta) { mensagem.classList.add("success"); mensagem.innerHTML = "🎉 <strong>Meta alcançada!</strong><br>" + "O valor que você informou já é suficiente para alcançar ou superar sua meta."; return; } if (porMes > meta) { mensagem.classList.add("warning"); mensagem.innerHTML = "⚠️ O valor mensal necessário ficou alto em relação ao tamanho da meta. " + "Confira se o prazo está correto ou considere aumentar o prazo."; return; } mensagem.classList.add("success"); mensagem.innerHTML = "📅 Guardando aproximadamente <strong>" + dinheiro(porMes) + "</strong> por mês, você poderá alcançar os " + "<strong>" + dinheiro(falta) + "</strong> que faltam em aproximadamente " + "<strong>" + meses + " meses</strong>."; } document.addEventListener( "keydown", function(event) { if ( event.key === "Enter" && ( document.activeElement.tagName === "INPUT" ) ) { calcularMeta(); } } ); </script>
+
+</body>
+
+</html>

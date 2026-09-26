@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Controle de Gastos | EconoMONEY</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<header>
+
+    <div class="logo">
+        💰 ECONO<span>MONEY</span>
+    </div>
+
+    <nav>
+        <a href="index.html">Início</a>
+        <a href="necessidades.html">Necessidades</a>
+        <a href="lazer.html">Lazer</a>
+        <a href="compras.html">Compras</a>
+        <a href="gastos.html">Gastos</a>
+        <a href="poupanca.html">Poupança</a>
+        <a href="investimentos.html">Investimentos</a>
+        <a href="metas.html">Metas</a>
+    </nav>
+
+</header>
+
+<main>
+
+    <section class="hero">
+
+        <div class="hero-text">
+
+            <div class="tag">
+                CONTROLE FINANCEIRO
+            </div>
+
+            <h1>
+                Controle seus
+                <span>gastos.</span>
+            </h1>
+
+            <p>
+                Registre sua renda e suas despesas para
+                entender melhor seu orçamento e visualizar
+                quanto sobra no final do período.
+            </p>
+
+            <a href="#controle" class="button">
+                CONTROLAR → 
+            </a>
+
+        </div>
+
+        <div class="hero-card">
+
+            <div class="money-icon">
+                💳
+            </div>
+
+            <h2>
+                ECONOMONEY
+            </h2>
+
+            <p>
+                Organize. Analise. Planeje.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- CONTROLE -->
+
+    <section id="controle" class="section">
+
+        <div class="section-title">
+
+            <span>01</span>
+
+            <h2>
+                Controle de gastos
+            </h2>
+
+        </div>
+
+
+        <div class="budget-layout">
+
+            <div class="budget-box">
+
+                <h3>
+                    💰 Renda mensal
+                </h3>
+
+                <p style="margin-top:15px">
+                    Informe quanto você recebe por mês.
+                </p>
+
+                <input
+                    type="number"
+                    id="income"
+                    placeholder="Ex: 3000"
+                    min="0"
+                    step="0.01"
+                >
+
+                <input
+                    type="number"
+                    id="otherIncome"
+                    placeholder="Outras rendas"
+                    min="0"
+                    step="0.01"
+                >
+
+            </div>
+
+
+            <div class="budget-box">
+
+                <h3>
+                    🧾 Gastos
+                </h3>
+
+                <p style="margin-top:15px">
+                    Preencha os valores aproximados de cada categoria.
+                </p>
+
+                <input
+                    type="number"
+                    id="housing"
+                    placeholder="🏠 Moradia"
+                    min="0"
+                    step="0.01"
+                >
+
+                <input
+                    type="number"
+                    id="food"
+                    placeholder="🍎 Alimentação"
+                    min="0"
+                    step="0.01"
+                >
+
+                <input
+                    type="number"
+                    id="transport"
+                    placeholder="🚌 Transporte"
+                    min="0"
+                    step="0.01"
+                >
+
+                <input
+                    type="number"
+                    id="bills"
+                    placeholder="💡 Contas"
+                    min="0"
+                    step="0.01"
+                >
+
+                <input
+                    type="number"
+                    id="leisure"
+                    placeholder="🎮 Lazer"
+                    min="0"
+                    step="0.01"
+                >
+
+                <input
+                    type="number"
+                    id="shopping"
+                    placeholder="🛒 Compras"
+                    min="0"
+                    step="0.01"
+                >
+
+                <input
+                    type="number"
+                    id="education"
+                    placeholder="📚 Educação"
+                    min="0"
+                    step="0.01"
+                >
+
+                <input
+                    type="number"
+                    id="otherExpenses"
+                    placeholder="📦 Outros gastos"
+                    min="0"
+                    step="0.01"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div style="text-align:center; margin-top:30px">
+
+            <button
+                class="button"
+                type="button"
+                onclick="analyzeBudget()"
+            >
+                ANALISAR MEUS GASTOS →
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- RESULTADOS -->
+
+    <section class="section dark">
+
+        <div class="section-title">
+
+            <span>02</span>
+
+            <h2>
+                Resultado
+            </h2>
+
+        </div>
+
+
+        <div class="cards">
+
+            <div class="card">
+
+                <div class="icon">
+                    💰
+                </div>
+
+                <h3>
+                    Renda
+                </h3>
+
+                <p id="metricIncome">
+                    R$ 0,00
+                </p>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="icon">
+                    🧾
+                </div>
+
+                <h3>
+                    Gastos
+                </h3>
+
+                <p id="metricExpenses">
+                    R$ 0,00
+                </p>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="icon">
+                    💵
+                </div>
+
+                <h3>
+                    Sobra
+                </h3>
+
+                <p id="metricBalance">
+                    R$ 0,00
+                </p>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="icon">
+                    📊
+                </div>
+
+                <h3>
+                    Taxa de sobra
+                </h3>
+
+                <p id="metricSaving">
+                    0%
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- GRÁFICO -->
+
+    <section class="section">
+
+        <div class="section-title">
+
+            <span>03</span>
+
+            <h2>
+                Distribuição dos gastos
+            </h2>
+
+        </div>
+
+
+        <div class="budget-layout">
+
+            <div class="budget-box">
+
+                <canvas id="expenseChart"></canvas>
+
+            </div>
+
+
+            <div class="budget-box">
+
+                <div id="distributionText">
+
+                    <h3>
+                        📊 Distribuição
+                    </h3>
+
+                    <p>
+                        Preencha os valores e clique em
+                        "Analisar meus gastos".
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- DIAGNÓSTICO -->
+
+    <section class="section dark">
+
+        <div class="section-title">
+
+            <span>04</span>
+
+            <h2>
+                Análise do orçamento
+            </h2>
+
+        </div>
+
+
+        <div id="diagnosis">
+
+            <div class="info">
+
+                <h3>
+                    🧠 Análise financeira
+                </h3>
+
+                <p>
+                    Preencha seus dados acima para receber
+                    uma análise do orçamento.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ASSISTENTE -->
+
+    <section class="section">
+
+        <div class="section-title">
+
+            <span>05</span>
+
+            <h2>
+                Assistente Financeiro
+            </h2>
+
+        </div>
+
+
+        <div class="budget-box">
+
+            <h3>
+                🤖 Pergunte ao EconoMONEY
+            </h3>
+
+            <p style="margin-top:15px">
+
+                Faça perguntas sobre orçamento, gastos,
+                poupança, metas, compras e outros assuntos
+                financeiros.
+
+            </p>
+
+
+            <input
+                type="text"
+                id="assistantQuestion"
+                placeholder="Ex: Como posso organizar meus gastos?"
+            >
+
+
+            <button
+                class="button"
+                type="button"
+                onclick="financialAssistant()"
+                style="margin-top:15px"
+            >
+                PERGUNTAR →
+            </button>
+
+
+            <div
+                id="assistantResult"
+                style="margin-top:25px"
+            >
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- RELATÓRIO -->
+
+    <section class="section dark">
+
+        <div class="section-title">
+
+            <span>06</span>
+
+            <h2>
+                Relatório
+            </h2>
+
+        </div>
+
+
+        <div class="budget-box">
+
+            <p>
+                Gere um resumo dos dados preenchidos.
+            </p>
+
+
+            <button
+                class="button"
+                type="button"
+                onclick="generateReport()"
+                style="margin-top:15px"
+            >
+                GERAR RELATÓRIO →
+            </button>
+
+
+            <div
+                id="report"
+                style="margin-top:25px"
+            >
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- FINAL -->
+
+    <section
+        class="section"
+        style="text-align:center"
+    >
+
+        <h2>
+            Controle primeiro. Decida depois. 💰
+        </h2>
+
+        <p style="margin-top:15px">
+
+            Quanto melhor você entende seus gastos,
+            melhor consegue planejar suas próximas decisões.
+
+        </p>
+
+
+        <a
+            href="index.html"
+            class="button"
+        >
+            ← VOLTAR AO INÍCIO
+        </a>
+
+    </section>
+
+</main>
+
+
+<footer>
+
+    <h2>
+        💰 ECONOMONEY
+    </h2>
+
+    <p>
+        Educação financeira de forma simples.
+    </p>
+
+    <p class="copyright">
+        © 2026 EconoMONEY
+    </p>
+
+</footer>
+
+
+<!-- CHART.JS -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- SCRIPT DO SITE -->
+
+<script src="script.js"></script>
+
+</body>
+
+</html>

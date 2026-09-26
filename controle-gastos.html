@@ -1,0 +1,3345 @@
+
+
+<script>
+/* =========================================================
+   ECONOMONEY — CENTRAL FINANCEIRA
+   ASSISTENTE FINANCEIRO INTELIGENTE
+   ========================================================= */
+
+let expenseChart = null;
+
+/* =========================================================
+   UTILIDADES
+   ========================================================= */
+
+function num(id){
+    const element = document.getElementById(id);
+
+    if(!element){
+        return 0;
+    }
+
+    const value = parseFloat(element.value);
+
+    return Number.isFinite(value) ? value : 0;
+}
+
+function money(value){
+    return Number(value || 0).toLocaleString(
+        "pt-BR",
+        {
+            style:"currency",
+            currency:"BRL"
+        }
+    );
+}
+
+function pct(value){
+    return Number(value || 0).toFixed(1) + "%";
+}
+
+function escapeHTML(text){
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function normalize(text){
+    return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g,"");
+}
+
+function has(text, words){
+    return words.some(word => text.includes(normalize(word)));
+}
+
+/* =========================================================
+   RENDA
+   ========================================================= */
+
+function getIncome(){
+    return num("income") + num("otherIncome");
+}
+
+/* =========================================================
+   GASTOS
+   ========================================================= */
+
+function getExpenses(){
+
+    return {
+        "Moradia": num("housing"),
+        "Alimentação": num("food"),
+        "Transporte": num("transport"),
+        "Contas": num("bills"),
+        "Lazer": num("leisure"),
+        "Compras": num("shopping"),
+        "Educação": num("education"),
+        "Outros": num("otherExpenses")
+    };
+}
+
+function getTotalExpenses(){
+
+    return Object.values(getExpenses())
+        .reduce((total,value) => total + value,0);
+}
+
+function getFinancialData(){
+
+    const income = getIncome();
+    const expenses = getTotalExpenses();
+    const balance = income - expenses;
+
+    const savingRate =
+        income > 0
+        ? balance / income * 100
+        : 0;
+
+    const expensesData = getExpenses();
+
+    const categories =
+        Object.entries(expensesData)
+        .filter(([name,value]) => value > 0)
+        .sort((a,b) => b[1] - a[1]);
+
+    return {
+        income,
+        expenses,
+        balance,
+        savingRate,
+        categories,
+        biggest: categories[0] || null
+    };
+}
+
+/* =========================================================
+   ANÁLISE DO ORÇAMENTO
+   ========================================================= */
+
+function analyzeBudget(){
+
+    const data = getFinancialData();
+
+    document.getElementById("metricIncome").textContent =
+        money(data.income);
+
+    document.getElementById("metricExpenses").textContent =
+        money(data.expenses);
+
+    document.getElementById("metricBalance").textContent =
+        money(data.balance);
+
+    document.getElementById("metricSaving").textContent =
+        pct(data.savingRate);
+
+    createChart();
+    showDistribution();
+    showDiagnosis();
+}
+
+/* =========================================================
+   GRÁFICO
+   ========================================================= */
+
+function createChart(){
+
+    const data = getExpenses();
+
+    const canvas = document.getElementById("expenseChart");
+
+    if(!canvas){
+        return;
+    }
+
+    const ctx = canvas.getContext("2d");
+
+    if(expenseChart){
+        expenseChart.destroy();
+    }
+
+    expenseChart = new Chart(
+        ctx,
+        {
+            type:"doughnut",
+
+            data:{
+                labels:Object.keys(data),
+
+                datasets:[
+                    {
+                        data:Object.values(data)
+                    }
+                ]
+            },
+
+            options:{
+                responsive:true,
+
+                plugins:{
+                    legend:{
+                        labels:{
+                            color:"#ffffff"
+                        }
+                    }
+                }
+            }
+        }
+    );
+}
+
+/* =========================================================
+   DISTRIBUIÇÃO
+   ========================================================= */
+
+function showDistribution(){
+
+    const data = getFinancialData();
+
+    let html = "<h3>📊 Distribuição dos gastos</h3>";
+
+    if(data.categories.length === 0){
+
+        html += 
+            <p>
+                Nenhum gasto foi informado ainda.
+            </p>
+        ;
+
+    }else{
+
+        data.categories.forEach(
+            ([name,value]) => {
+
+                const percentage =
+                    data.income > 0
+                    ? value / data.income * 100
+                    : 0;
+
+                html += 
+                    <p>
+                        <b>${escapeHTML(name)}</b>
+                        —
+                        ${money(value)}
+                        (${percentage.toFixed(1)}% da renda)
+                    </p>
+                ;
+            }
+        );
+    }
+
+    document.getElementById("distributionText").innerHTML = html;
+}
+
+/* =========================================================
+   DIAGNÓSTICO
+   ========================================================= */
+
+function showDiagnosis(){
+
+    const data = getFinancialData();
+
+    let html = "";
+
+    if(data.income <= 0){
+
+        html = 
+            <div class="warning">
+                <b>⚠️ Falta informar sua renda.</b>
+
+                <p>
+                    Informe sua renda mensal para que a análise
+                    financeira consiga calcular sobra e proporções.
+                </p>
+            </div>
+        ;
+
+    }else if(data.balance < 0){
+
+        html = 
+            <div class="danger">
+
+                <b>🚨 Os gastos informados ultrapassam a renda.</b>
+
+                <p>
+                    A diferença é de
+                    <b>${money(Math.abs(data.balance))}</b>.
+                </p>
+
+                <p>
+                    Isso significa que, com esses números,
+                    seria necessário reduzir despesas,
+                    aumentar a renda ou rever o planejamento.
+                </p>
+
+            </div>
+        ;
+
+    }else if(data.savingRate < 10){
+
+        html = 
+            <div class="warning">
+
+                <b>⚠️ A margem financeira está relativamente apertada.</b>
+
+                <p>
+                    A sobra representa aproximadamente
+                    <b>${pct(data.savingRate)}</b>
+                    da renda informada.
+                </p>
+
+                <p>
+                    Isso não significa automaticamente que o orçamento
+                    esteja errado. O contexto e as prioridades também importam.
+                </p>
+
+            </div>
+        ;
+
+    }else{
+
+        html = 
+            <div class="success">
+
+                <b>🟢 Existe uma sobra financeira informada.</b>
+
+                <p>
+                    Sua sobra mensal é de
+                    <b>${money(data.balance)}</b>.
+                </p>
+
+                <p>
+                    Essa margem pode ser analisada em relação
+                    a metas, reserva, compras planejadas ou outros objetivos.
+                </p>
+
+            </div>
+        ;
+    }
+
+    if(data.biggest){
+
+        const [name,value] = data.biggest;
+
+        const percentage =
+            data.income > 0
+            ? value / data.income * 100
+            : 0;
+
+        html += 
+            <div class="info">
+
+                <b>🔎 Maior categoria informada</b>
+
+                <p>
+                    <b>${escapeHTML(name)}</b>
+                    representa aproximadamente
+                    <b>${percentage.toFixed(1)}%</b>
+                    da renda.
+                </p>
+
+                <p>
+                    Uma categoria maior não é automaticamente um problema.
+                    É necessário analisar se ela corresponde a uma necessidade,
+                    prioridade ou escolha de consumo.
+                </p>
+
+            </div>
+        ;
+    }
+
+    document.getElementById("diagnosis").innerHTML = html;
+}
+
+/* =========================================================
+   METAS
+   ========================================================= */
+
+function calculateGoal(){
+
+    const target = num("goalValue");
+    const current = num("goalCurrent");
+    const months = num("goalMonths");
+
+    if(target <= 0 || months <= 0){
+
+        document.getElementById("goalResult").innerHTML =
+            "Informe valores válidos.";
+
+        return;
+    }
+
+    const remaining =
+        Math.max(0,target-current);
+
+    const monthly =
+        remaining/months;
+
+    document.getElementById("goalResult").innerHTML = 
+
+        <h3>🎯 Plano da meta</h3>
+
+        <p>
+            Meta:
+            <b>${money(target)}</b>
+        </p>
+
+        <p>
+            Já possui:
+            <b>${money(current)}</b>
+        </p>
+
+        <p>
+            Falta:
+            <b>${money(remaining)}</b>
+        </p>
+
+        <p>
+            Necessário por mês:
+            <b>${money(monthly)}</b>
+        </p>
+
+    ;
+}
+
+/* =========================================================
+   INFLAÇÃO
+   ========================================================= */
+
+function calculateInflation(){
+
+    const value = num("inflationValue");
+    const rate = num("inflationRate");
+    const years = num("inflationYears");
+
+    if(value <= 0 || years < 0){
+
+        document.getElementById("inflationResult").innerHTML =
+            "Informe valores válidos.";
+
+        return;
+    }
+
+    const future =
+        value *
+        Math.pow(
+            1 + rate/100,
+            years
+        );
+
+    document.getElementById("inflationResult").innerHTML = 
+
+        <h3>📈 Simulação de inflação</h3>
+
+        <p>
+            Valor atual:
+            <b>${money(value)}</b>
+        </p>
+
+        <p>
+            Taxa utilizada:
+            <b>${rate}% ao ano</b>
+        </p>
+
+        <p>
+            Período:
+            <b>${years} anos</b>
+        </p>
+
+        <p>
+            Valor equivalente na simulação:
+            <b>${money(future)}</b>
+        </p>
+
+        <div class="warning">
+
+            Esta é uma simulação matemática com uma taxa constante.
+            A inflação real pode variar ao longo do tempo.
+
+        </div>
+
+    ;
+}
+
+/* =========================================================
+   VALOR POR HORA
+   ========================================================= */
+
+function calculateHourly(){
+
+    const income = num("hourlyIncome");
+    const hours = num("hourlyHours");
+    const costs = num("hourlyCosts");
+
+    if(income <= 0 || hours <= 0){
+
+        document.getElementById("hourlyResult").innerHTML =
+            "Informe renda e horas válidas.";
+
+        return;
+    }
+
+    const monthlyHours =
+        hours * 4.33;
+
+    const gross =
+        income/monthlyHours;
+
+    const net =
+        Math.max(0,income-costs)/monthlyHours;
+
+    document.getElementById("hourlyResult").innerHTML = 
+
+        <h3>⏱️ Valor aproximado por hora</h3>
+
+        <p>
+            Antes dos custos:
+            <b>${money(gross)}</b>
+            por hora.
+        </p>
+
+        <p>
+            Depois dos custos informados:
+            <b>${money(net)}</b>
+            por hora.
+        </p>
+
+        <p class="small">
+            O cálculo usa aproximadamente 4,33 semanas por mês.
+        </p>
+
+    ;
+}
+
+/* =========================================================
+   SIMULADOR
+   ========================================================= */
+
+function simulate(){
+
+    const income = num("simIncome");
+    const change = num("simChange");
+    const expenses = num("simExpenses");
+
+    if(income <= 0){
+
+        document.getElementById("simulationResult").innerHTML =
+            "Informe uma renda válida.";
+
+        return;
+    }
+
+    const newIncome =
+        income * (1 + change/100);
+
+    const oldBalance =
+        income-expenses;
+
+    const newBalance =
+        newIncome-expenses;
+
+    document.getElementById("simulationResult").innerHTML = 
+
+        <h3>🔮 Resultado da simulação</h3>
+
+        <p>
+            Renda atual:
+            <b>${money(income)}</b>
+        </p>
+
+        <p>
+            Renda simulada:
+            <b>${money(newIncome)}</b>
+        </p>
+
+        <p>
+            Sobra atual:
+            <b>${money(oldBalance)}</b>
+        </p>
+
+        <p>
+            Sobra simulada:
+            <b>${money(newBalance)}</b>
+        </p>
+
+    ;
+}
+
+/* =========================================================
+   PATRIMÔNIO
+   ========================================================= */
+
+function calculateNetWorth(){
+
+    const cash = num("cashAssets");
+    const investments = num("investments");
+    const debts = num("debts");
+
+    const assets =
+        cash+investments;
+
+    const net =
+        assets-debts;
+
+    document.getElementById("netWorthResult").innerHTML = 
+
+        <h3>🏦 Patrimônio líquido</h3>
+
+        <p>
+            Recursos:
+            <b>${money(assets)}</b>
+        </p>
+
+        <p>
+            Dívidas:
+            <b>${money(debts)}</b>
+        </p>
+
+        <p>
+            Patrimônio líquido:
+            <b>${money(net)}</b>
+        </p>
+
+    ;
+}
+
+/* =========================================================
+   PROJEÇÃO
+   ========================================================= */
+
+function projection(){
+
+    const monthly = num("projectionMonthly");
+    const months = num("projectionMonths");
+    const initial = num("projectionInitial");
+
+    if(monthly < 0 || months <= 0){
+
+        document.getElementById("projectionResult").innerHTML =
+            "Informe valores válidos.";
+
+        return;
+    }
+
+    const total =
+        initial + monthly*months;
+
+    document.getElementById("projectionResult").innerHTML = 
+
+        <h3>📅 Projeção financeira</h3>
+
+        <p>
+            Valor inicial:
+            <b>${money(initial)}</b>
+        </p>
+
+        <p>
+            Aporte mensal:
+            <b>${money(monthly)}</b>
+        </p>
+
+        <p>
+            Período:
+            <b>${months} meses</b>
+        </p>
+
+        <p>
+            Valor acumulado:
+            <b>${money(total)}</b>
+        </p>
+
+        <div class="info">
+
+            Essa projeção não considera rendimento,
+            impostos ou mudanças nos aportes.
+
+        </div>
+
+    ;
+}
+
+/* =========================================================
+   RELATÓRIO
+   ========================================================= */
+
+function generateReport(){
+
+    const data = getFinancialData();
+
+    document.getElementById("report").innerHTML = 
+
+        <h3>📋 Relatório financeiro</h3>
+
+        <p>
+            <b>Renda:</b>
+            ${money(data.income)}
+        </p>
+
+        <p>
+            <b>Gastos:</b>
+            ${money(data.expenses)}
+        </p>
+
+        <p>
+            <b>Sobra:</b>
+            ${money(data.balance)}
+        </p>
+
+        <p>
+            <b>Taxa de sobra:</b>
+            ${pct(data.savingRate)}
+        </p>
+
+        <p>
+            <b>Maior categoria:</b>
+            ${
+                data.biggest
+                ? escapeHTML(data.biggest[0])
+                : "Nenhuma informada"
+            }
+        </p>
+
+    ;
+}
+
+/* =========================================================
+   ASSISTENTE — EXTRAÇÃO DE NÚMEROS
+   ========================================================= */
+
+function extractMoney(text){
+
+    const matches =
+        text.match(
+            /(?:r\$|\br\$)?\s*\d+(?:[.,]\d+)?/gi
+        );
+
+    if(!matches){
+        return [];
+    }
+
+    return matches
+        .map(value =>
+            parseFloat(
+                value
+                    .replace(/r\$/gi,"")
+                    .replace(/\./g,"")
+                    .replace(",",".")
+                    .trim()
+            )
+        )
+        .filter(value => Number.isFinite(value));
+}
+
+/* =========================================================
+   ASSISTENTE — DETECTOR DE INTENÇÃO
+   ========================================================= */
+
+function detectIntent(question){
+
+    const q = normalize(question);
+
+    const intents = [];
+
+    if(has(q,[
+        "inflacao",
+        "precos",
+        "poder de compra"
+    ])){
+        intents.push("inflacao");
+    }
+
+    if(
+        q.includes("juros compostos") ||
+        q.includes("juros composto")
+    ){
+        intents.push("juros_compostos");
+
+    }else if(q.includes("juros")){
+
+        intents.push("juros");
+    }
+
+    if(has(q,[
+        "orcamento",
+        "organizar dinheiro",
+        "organizar meu dinheiro",
+        "controle de gastos"
+    ])){
+        intents.push("orcamento");
+    }
+
+    if(has(q,[
+        "poupanca",
+        "guardar dinheiro",
+        "guardar"
+    ])){
+        intents.push("poupanca");
+    }
+
+    if(has(q,[
+        "investimento",
+        "investir",
+        "investimentos"
+    ])){
+        intents.push("investimentos");
+    }
+
+    if(has(q,[
+        "risco",
+        "riscos"
+    ])){
+        intents.push("risco");
+    }
+
+    if(has(q,[
+        "diversificacao",
+        "diversificar"
+    ])){
+        intents.push("diversificacao");
+    }
+
+    if(has(q,[
+        "meta",
+        "objetivo",
+        "juntar dinheiro"
+    ])){
+        intents.push("meta");
+    }
+
+    if(has(q,[
+        "emprego",
+        "trabalho",
+        "carreira",
+        "profissao",
+        "salario",
+        "vaga",
+        "trabalhar"
+    ])){
+        intents.push("emprego");
+    }
+
+    if(has(q,[
+        "por hora",
+        "valor da hora",
+        "hora de trabalho",
+        "horas trabalhadas"
+    ])){
+        intents.push("hora");
+    }
+
+    if(has(q,[
+        "comprar",
+        "compra",
+        "celular",
+        "computador",
+        "pc",
+        "videogame"
+    ])){
+        intents.push("compra");
+    }
+
+    if(has(q,[
+        "divida",
+        "devo",
+        "endividado",
+        "parcela"
+    ])){
+        intents.push("divida");
+    }
+
+    if(has(q,[
+        "credito",
+        "cartao",
+        "cartao de credito",
+        "financiamento"
+    ])){
+        intents.push("credito");
+    }
+
+    if(has(q,[
+        "economizar",
+        "economia",
+        "como poupar",
+        "reduzir gastos"
+    ])){
+        intents.push("economizar");
+    }
+
+    if(has(q,[
+        "patrimonio",
+        "riqueza",
+        "bens"
+    ])){
+        intents.push("patrimonio");
+    }
+
+    if(has(q,[
+        "simular",
+        "simulacao",
+        "e se",
+        "cenário",
+        "cenario"
+    ])){
+        intents.push("simulacao");
+    }
+
+    return [...new Set(intents)];
+}
+
+/* =========================================================
+   ASSISTENTE — EXPLICAÇÕES
+   ========================================================= */
+
+function explainInflation(){
+
+    return 
+        <div class="info">
+
+            <h3>📈 Inflação</h3>
+
+            <p>
+                Inflação é o aumento generalizado dos preços
+                de bens e serviços ao longo do tempo.
+            </p>
+
+            <p>
+                Quando os preços aumentam, a mesma quantidade
+                de dinheiro pode comprar uma quantidade menor
+                de produtos e serviços.
+            </p>
+
+            <p>
+                Por isso, em objetivos de longo prazo,
+                é importante considerar que os preços podem
+                mudar ao longo dos anos.
+            </p>
+
+            <p>
+                A calculadora de inflação desta página permite
+                fazer uma simulação matemática usando uma taxa
+                constante.
+            </p>
+
+        </div>
+    ;
+}
+
+function explainInterest(){
+
+    return 
+        <div class="info">
+
+            <h3>💹 Juros</h3>
+
+            <p>
+                Juros são uma forma de representar o custo
+                ou o rendimento associado ao dinheiro ao longo
+                de determinado período.
+            </p>
+
+            <p>
+                Em uma dívida, os juros podem aumentar o custo
+                total da operação.
+            </p>
+
+            <p>
+                Em uma aplicação, os juros podem contribuir
+                para o crescimento do valor investido.
+            </p>
+
+            <p>
+                Para analisar uma operação financeira,
+                observe taxa, prazo, custos e condições.
+            </p>
+
+        </div>
+    ;
+}
+
+function explainCompoundInterest(){
+
+    return 
+        <div class="info">
+
+            <h3>📈 Juros compostos</h3>
+
+            <p>
+                Juros compostos são calculados sobre um valor
+                que já inclui os resultados acumulados
+                dos períodos anteriores.
+            </p>
+
+            <p>
+                Por isso, o efeito pode crescer com o passar
+                do tempo.
+            </p>
+
+            <p>
+                Taxa, tempo e frequência de capitalização
+                influenciam o resultado.
+            </p>
+
+        </div>
+    ;
+}
+
+function explainBudget(data){
+
+    return 
+        <div class="info">
+
+            <h3>📊 Orçamento</h3>
+
+            <p>
+                Um orçamento organiza o dinheiro que entra,
+                o dinheiro que sai e aquilo que permanece
+                disponível.
+            </p>
+
+            <h4>Seus dados atuais:</h4>
+
+            <p>
+                Renda:
+                <b>${money(data.income)}</b>
+            </p>
+
+            <p>
+                Gastos:
+                <b>${money(data.expenses)}</b>
+            </p>
+
+            <p>
+                Sobra:
+                <b>${money(data.balance)}</b>
+            </p>
+
+            <p>
+                Taxa de sobra:
+                <b>${pct(data.savingRate)}</b>
+            </p>
+
+        </div>
+    ;
+}
+
+function explainSaving(data){
+
+    return 
+        <div class="info">
+
+            <h3>🐷 Poupança</h3>
+
+            <p>
+                Poupar significa reservar parte dos recursos
+                em vez de utilizar todo o dinheiro disponível.
+            </p>
+
+            <p>
+                O dinheiro poupado pode ser direcionado para
+                objetivos, compras planejadas ou outras
+                necessidades futuras.
+            </p>
+
+            <p>
+                Com os dados atuais, sua sobra informada é:
+                <b>${money(data.balance)}</b>.
+            </p>
+
+        </div>
+    ;
+}
+
+function explainInvestments(){
+
+    return 
+        <div class="info">
+
+            <h3>📈 Investimentos</h3>
+
+            <p>
+                Investimento é a aplicação de recursos
+                buscando algum resultado financeiro futuro.
+            </p>
+
+            <p>
+                Cada alternativa possui características
+                próprias de risco, liquidez, prazo,
+                rentabilidade potencial, custos e tributação.
+            </p>
+
+            <h4>Antes de analisar um investimento:</h4>
+
+            <ul>
+
+                <li>Entenda como ele funciona.</li>
+                <li>Conheça os riscos.</li>
+                <li>Observe a liquidez.</li>
+                <li>Considere o prazo.</li>
+                <li>Observe custos e impostos aplicáveis.</li>
+
+            </ul>
+
+        </div>
+    ;
+}
+
+function explainRisk(){
+
+    return 
+        <div class="info">
+
+            <h3>⚠️ Risco financeiro</h3>
+
+            <p>
+                Risco é a possibilidade de o resultado
+                ser diferente do esperado.
+            </p>
+
+            <p>
+                Dependendo da situação, isso pode envolver
+                variação de preços, perda financeira,
+                dificuldade de venda ou outros fatores.
+            </p>
+
+            <p>
+                Por isso, analisar apenas o possível ganho
+                não é suficiente.
+            </p>
+
+        </div>
+    ;
+}
+
+function explainDiversification(){
+
+    return 
+        <div class="info">
+
+            <h3>🧩 Diversificação</h3>
+
+            <p>
+                Diversificação significa distribuir recursos
+                entre diferentes alternativas.
+            </p>
+
+            <p>
+                A ideia é evitar que todo o resultado dependa
+                de uma única alternativa.
+            </p>
+
+            <p>
+                Diversificação pode reduzir determinados riscos,
+                mas não elimina todos eles.
+            </p>
+
+        </div>
+    ;
+}
+
+/* =========================================================
+   ASSISTENTE — EMPREGO
+   ========================================================= */
+
+function explainJob(data){
+
+    const hours = num("workHours");
+
+    let hourlyText = "";
+
+    if(data.income > 0 && hours > 0){
+
+        const monthlyHours = hours * 4.33;
+        const hourly = data.income / monthlyHours;
+
+        hourlyText = 
+            <p>
+                Com os dados preenchidos, a renda corresponde
+                aproximadamente a
+                <b>${money(hourly)}</b>
+                por hora trabalhada.
+            </p>
+        ;
+    }
+
+    return 
+        <div class="info">
+
+            <h3>💼 Como analisar um emprego ou carreira</h3>
+
+            <p>
+                O salário é uma informação importante,
+                mas não é o único elemento que pode ser
+                considerado ao comparar oportunidades.
+            </p>
+
+            <h4>Alguns fatores que podem ser analisados:</h4>
+
+            <ul>
+
+                <li>💰 salário;</li>
+                <li>⏱️ horas trabalhadas;</li>
+                <li>🏠 possibilidade de home office;</li>
+                <li>🚗 custo e tempo de transporte;</li>
+                <li>📚 aprendizado;</li>
+                <li>📈 possibilidade de desenvolvimento;</li>
+                <li>🎯 estabilidade;</li>
+                <li>🧠 rotina e ambiente;</li>
+                <li>🎁 benefícios;</li>
+                <li>📍 localização;</li>
+                <li>⚖️ equilíbrio entre trabalho e vida pessoal.</li>
+
+            </ul>
+
+            ${hourlyText}
+
+            <p>
+                Uma comparação mais completa considera o conjunto
+                da oportunidade, e não somente o número do salário.
+            </p>
+
+        </div>
+    ;
+}
+
+/* =========================================================
+   ASSISTENTE — VALOR DA HORA
+   ========================================================= */
+
+function explainHourly(data){
+
+    const hours = num("workHours");
+
+    if(data.income <= 0 || hours <= 0){
+
+        return 
+            <div class="warning">
+
+                <h3>⏱️ Valor por hora</h3>
+
+                <p>
+                    Para calcular uma estimativa,
+                    informe sua renda mensal e suas
+                    horas trabalhadas por semana.
+                </p>
+
+            </div>
+        ;
+    }
+
+    const monthlyHours =
+        hours * 4.33;
+
+    const hourly =
+        data.income/monthlyHours;
+
+    return 
+        <div class="info">
+
+            <h3>⏱️ Valor aproximado por hora</h3>
+
+            <p>
+                Renda mensal:
+                <b>${money(data.income)}</b>
+            </p>
+
+            <p>
+                Horas semanais:
+                <b>${hours}</b>
+            </p>
+
+            <p>
+                Estimativa:
+                <b>${money(hourly)} por hora</b>
+            </p>
+
+            <p class="small">
+                Esse valor é uma estimativa matemática
+                baseada nos dados preenchidos.
+            </p>
+
+        </div>
+    ;
+}
+
+/* =========================================================
+   ASSISTENTE — COMPRAS
+   ========================================================= */
+
+function explainPurchase(data){
+
+    return 
+        <div class="info">
+
+            <h3>🛒 Como analisar uma compra</h3>
+
+            <p>
+                Antes de uma compra importante, vale analisar
+                não apenas o preço, mas também o impacto
+                da compra no orçamento.
+            </p>
+
+            <ul>
+
+                <li>É necessidade ou desejo?</li>
+
+                <li>Tenho dinheiro disponível?</li>
+
+                <li>Quanto tempo levaria para juntar?</li>
+
+                <li>A compra atrapalha alguma meta?</li>
+
+                <li>Existe uma alternativa mais barata?</li>
+
+                <li>O produto será realmente utilizado?</li>
+
+                <li>Existe custo de manutenção?</li>
+
+                <li>O parcelamento aumenta o custo total?</li>
+
+            </ul>
+
+            <p>
+                Atualmente, a sobra informada no orçamento é
+                <b>${money(data.balance)}</b>.
+            </p>
+
+        </div>
+    ;
+}
+
+/* =========================================================
+   ASSISTENTE — DÍVIDAS
+   ========================================================= */
+
+function explainDebt(){
+
+    return 
+        <div class="warning">
+
+            <h3>💳 Dívidas</h3>
+
+            <p>
+                Para analisar uma dívida, não observe apenas
+                o tamanho da parcela.
+            </p>
+
+            <p>
+                Também é importante conhecer:
+            </p>
+
+            <ul>
+
+                <li>valor total;</li>
+                <li>taxa de juros;</li>
+                <li>quantidade de parcelas;</li>
+                <li>custo total;</li>
+                <li>impacto no orçamento.</li>
+
+            </ul>
+
+        </div>
+    ;
+}
+
+/* =========================================================
+   ASSISTENTE — CRÉDITO
+   ========================================================= */
+
+function explainCredit(){
+
+    return 
+        <div class="info">
+
+            <h3>💳 Crédito</h3>
+
+            <p>
+                Crédito permite utilizar recursos agora
+                assumindo uma obrigação de pagamento posterior.
+            </p>
+
+            <p>
+                Cartões, empréstimos e financiamentos
+                são exemplos de operações de crédito.
+            </p>
+
+            <p>
+                Ao analisar uma operação, não observe somente
+                o valor da parcela. Verifique o custo total,
+                juros, prazo e demais condições.
+            </p>
+
+        </div>
+    ;
+}
+
+/* =========================================================
+   ASSISTENTE — META
+   ========================================================= */
+
+function explainGoal(){
+
+    const target = num("goalValue");
+    const current = num("goalCurrent");
+    const months = num("goalMonths");
+
+    let calculation = "";
+
+    if(target > 0 && months > 0){
+
+        const remaining =
+            Math.max(0,target-current);
+
+        const monthly =
+            remaining/months;
+
+        calculation = 
+
+            <p>
+                Com os dados da calculadora:
+            </p>
+
+            <p>
+                Falta:
+                <b>${money(remaining)}</b>
+            </p>
+
+            <p>
+                Necessário por mês:
+                <b>${money(monthly)}</b>
+            </p>
+
+        ;
+    }
+
+    return 
+        <div class="info">
+
+            <h3>🎯 Metas financeiras</h3>
+
+            <p>
+                Uma meta financeira fica mais fácil de acompanhar
+                quando possui um valor, um prazo e um plano.
+            </p>
+
+            <ul>
+
+                <li>Quanto custa?</li>
+                <li>Quanto já tenho?</li>
+                <li>Quanto falta?</li>
+                <li>Qual é o prazo?</li>
+                <li>Quanto preciso reservar por período?</li>
+
+            </ul>
+
+            ${calculation}
+
+        </div>
+    ;
+}
+
+/* =========================================================
+   ASSISTENTE — ECONOMIZAR
+   ========================================================= */
+
+function explainEconomy(data){
+
+    return 
+        <div class="success">
+
+            <h3>💰 Como pensar em economia</h3>
+
+            <p>
+                Economizar não significa necessariamente
+                cortar todos os gastos.
+            </p>
+
+            <p>
+                Primeiro, vale separar:
+            </p>
+
+            <ul>
+
+                <li>necessidades;</li>
+                <li>prioridades;</li>
+                <li>desejos;</li>
+                <li>gastos que podem ser reduzidos.</li>
+
+            </ul>
+
+            <p>
+                Depois, procure mudanças que melhorem
+                o orçamento sem comprometer necessidades
+                importantes.
+            </p>
+
+            <p>
+                Sua sobra atual informada:
+                <b>${money(data.balance)}</b>.
+            </p>
+
+        </div>
+    ;
+}
+
+/* =========================================================
+   ASSISTENTE — PATRIMÔNIO
+   ========================================================= */
+
+function explainPatrimony(){
+
+    const cash = num("cashAssets");
+    const investments = num("investments");
+    const debts = num("debts");
+
+    const assets =
+        cash + investments;
+
+    const net =
+        assets - debts;
+
+    return 
+        <div class="info">
+
+            <h3>🏦 Patrimônio</h3>
+
+            <p>
+                Recursos informados:
+                <b>${money(assets)}</b>
+            </p>
+
+            <p>
+                Dívidas informadas:
+                <b>${money(debts)}</b>
+            </p>
+
+            <p>
+                Patrimônio líquido:
+                <b>${money(net)}</b>
+            </p>
+
+            <p>
+                O patrimônio líquido é calculado,
+                nesta ferramenta, subtraindo as dívidas
+                dos recursos informados.
+            </p>
+
+        </div>
+    ;
+}
+
+/* =========================================================
+   ASSISTENTE — SIMULAÇÃO
+   ========================================================= */
+
+function explainSimulation(){
+
+    const income = num("simIncome");
+    const change = num("simChange");
+    const expenses = num("simExpenses");
+
+    if(income <= 0){
+
+        return 
+            <div class="warning">
+
+                <h3>🔮 Simulação</h3>
+
+                <p>
+                    Informe uma renda válida para realizar
+                    a simulação.
+                </p>
+
+            </div>
+        ;
+    }
+
+    const newIncome =
+        income * (1 + change/100);
+
+    const currentBalance =
+        income-expenses;
+
+    const newBalance =
+        newIncome-expenses;
+
+    return 
+        <div class="info">
+
+            <h3>🔮 Cenário simulado</h3>
+
+            <p>
+                Renda atual:
+                <b>${money(income)}</b>
+            </p>
+
+            <p>
+                Mudança:
+                <b>${pct(change)}</b>
+            </p>
+
+            <p>
+                Renda simulada:
+                <b>${money(newIncome)}</b>
+            </p>
+
+            <p>
+                Sobra atual:
+                <b>${money(currentBalance)}</b>
+            </p>
+
+            <p>
+                Sobra simulada:
+                <b>${money(newBalance)}</b>
+            </p>
+
+        </div>
+    ;
+}
+
+/* =========================================================
+   ASSISTENTE — ANÁLISE DE GASTOS
+   ========================================================= */
+
+function analyzeExpenses(data){
+
+    let html = 
+        <div class="info">
+
+            <h3>🧾 Análise dos seus gastos</h3>
+
+            <p>
+                Renda:
+                <b>${money(data.income)}</b>
+            </p>
+
+            <p>
+                Gastos:
+                <b>${money(data.expenses)}</b>
+            </p>
+
+            <p>
+                Sobra:
+                <b>${money(data.balance)}</b>
+            </p>
+
+            <p>
+                Taxa de sobra:
+                <b>${pct(data.savingRate)}</b>
+            </p>
+    ;
+
+    if(data.biggest){
+
+        const [name,value] = data.biggest;
+
+        const percentage =
+            data.income > 0
+            ? value/data.income*100
+            : 0;
+
+        html += 
+
+            <hr>
+
+            <p>
+                Maior categoria:
+                <b>${escapeHTML(name)}</b>
+            </p>
+
+            <p>
+                Valor:
+                <b>${money(value)}</b>
+            </p>
+
+            <p>
+                Participação:
+                <b>${percentage.toFixed(1)}%</b>
+                da renda.
+            </p>
+
+        ;
+    }
+
+    html += 
+        </div>
+    ;
+
+    return html;
+}
+
+/* =========================================================
+   ASSISTENTE — PERGUNTAS RÁPIDAS
+   ========================================================= */
+
+function quickQuestion(question){
+
+    const input =
+        document.getElementById("assistantQuestion");
+
+    input.value = question;
+
+    financialAssistant();
+}
+
+/* =========================================================
+   ASSISTENTE PRINCIPAL
+   ========================================================= */
+
+function financialAssistant(){
+
+    const input =
+        document.getElementById("assistantQuestion");
+
+    const result =
+        document.getElementById("assistantResult");
+
+    const question =
+        input.value.trim();
+
+    if(!question){
+
+        result.innerHTML = 
+
+            <div class="warning">
+
+                <b>💬 Digite uma pergunta primeiro.</b>
+
+                <p>
+                    Você pode perguntar sobre dinheiro,
+                    orçamento, inflação, empregos,
+                    compras, metas, investimentos
+                    e muitos outros assuntos.
+                </p>
+
+            </div>
+
+        ;
+
+        return;
+    }
+
+    const data =
+        getFinancialData();
+
+    const intents =
+        detectIntent(question);
+
+    let response = 
+
+        <h3>🤖 Assistente Financeiro EconoMONEY</h3>
+
+        <p>
+            <b>Você perguntou:</b><br>
+            ${escapeHTML(question)}
+        </p>
+
+        <hr>
+
+    ;
+
+    /* =====================================================
+       EXPLICAÇÕES
+       ===================================================== */
+
+    if(intents.includes("inflacao")){
+        response += explainInflation();
+    }
+
+    if(intents.includes("juros")){
+        response += explainInterest();
+    }
+
+    if(intents.includes("juros_compostos")){
+        response += explainCompoundInterest();
+    }
+
+    if(intents.includes("orcamento")){
+        response += explainBudget(data);
+    }
+
+    if(intents.includes("poupanca")){
+        response += explainSaving(data);
+    }
+
+    if(intents.includes("investimentos")){
+        response += explainInvestments();
+    }
+
+    if(intents.includes("risco")){
+        response += explainRisk();
+    }
+
+    if(intents.includes("diversificacao")){
+        response += explainDiversification();
+    }
+
+    if(intents.includes("emprego")){
+        response += explainJob(data);
+    }
+
+    if(intents.includes("hora")){
+        response += explainHourly(data);
+    }
+
+    if(intents.includes("compra")){
+        response += explainPurchase(data);
+    }
+
+    if(intents.includes("divida")){
+        response += explainDebt();
+    }
+
+    if(intents.includes("credito")){
+        response += explainCredit();
+    }
+
+    if(intents.includes("meta")){
+        response += explainGoal();
+    }
+
+    if(intents.includes("economizar")){
+        response += explainEconomy(data);
+    }
+
+    if(intents.includes("patrimonio")){
+        response += explainPatrimony();
+    }
+
+    if(intents.includes("simulacao")){
+        response += explainSimulation();
+    }
+
+    /* =====================================================
+       ANÁLISE AUTOMÁTICA DOS NÚMEROS
+       ===================================================== */
+
+    if(
+        intents.length === 0 ||
+        has(normalize(question),[
+            "gasto",
+            "gastando",
+            "ganho",
+            "renda",
+            "sobrou",
+            "orcamento",
+            "dinheiro"
+        ])
+    ){
+
+        response += analyzeExpenses(data);
+    }
+
+    /* =====================================================
+       SITUAÇÃO DE RENDA NEGATIVA
+       ===================================================== */
+
+    if(data.income > 0 && data.balance < 0){
+
+        response += 
+
+            <div class="danger">
+
+                <h3>🚨 Atenção ao orçamento</h3>
+
+                <p>
+                    Pelos valores preenchidos,
+                    os gastos estão
+                    <b>${money(Math.abs(data.balance))}</b>
+                    acima da renda.
+                </p>
+
+                <p>
+                    Antes de assumir novos compromissos,
+                    pode ser útil identificar quais despesas
+                    são essenciais e quais possuem maior
+                    possibilidade de ajuste.
+                </p>
+
+            </div>
+
+        ;
+    }
+
+    /* =====================================================
+       SITUAÇÃO DE SOBRA
+       ===================================================== */
+
+    if(data.income > 0 && data.balance > 0){
+
+        response += 
+
+            <div class="success">
+
+                <h3>🟢 Existe uma sobra no orçamento</h3>
+
+                <p>
+                    Depois dos gastos informados,
+                    permanecem aproximadamente
+                    <b>${money(data.balance)}</b>.
+                </p>
+
+                <p>
+                    Essa sobra pode ser relacionada a objetivos,
+                    reserva, compras planejadas ou outras
+                    prioridades financeiras.
+                </p>
+
+            </div>
+
+        ;
+    }
+
+    /* =====================================================
+       PERGUNTA NÃO RECONHECIDA
+       ===================================================== */
+
+    if(intents.length === 0){
+
+        response += 
+
+            <div class="info">
+
+                <h3>🧠 Vamos interpretar sua situação</h3>
+
+                <p>
+                    Não identifiquei um assunto financeiro
+                    específico na pergunta.
+                </p>
+
+                <p>
+                    Você pode explicar a situação com mais detalhes,
+                    por exemplo:
+                </p>
+
+                <ul>
+
+                    <li>
+                        "Eu ganho R$ 3000 e gasto R$ 2500.
+                        Quero comprar um computador de R$ 4000."
+                    </li>
+
+                    <li>
+                        "Recebi duas propostas de emprego.
+                        Como posso comparar?"
+                    </li>
+
+                    <li>
+                        "Tenho R$ 1000 e quero chegar a R$ 5000."
+                    </li>
+
+                    <li>
+                        "O que acontece com R$ 1000
+                        depois de vários anos de inflação?"
+                    </li>
+
+                </ul>
+
+            </div>
+
+        ;
+    }
+
+    /* =====================================================
+       CONTINUAR CONVERSA
+       ===================================================== */
+
+    response += 
+
+        <hr>
+
+        <div class="success">
+
+            <h3>🧠 Análise concluída</h3>
+
+            <p>
+                Você pode fazer outra pergunta agora.
+                O assistente continua funcionando sem
+                precisar recarregar a página.
+            </p>
+
+            <p>
+                Você também pode mudar os valores das
+                calculadoras e perguntar novamente.
+            </p>
+
+        </div>
+
+    ;
+
+    result.innerHTML =
+        response;
+}
+
+/* =========================================================
+   FIM
+   ========================================================= */
+</script>
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Controle de Gastos | EconoMONEY</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<header>
+
+    <div class="logo">
+        💰 ECONO<span>MONEY</span>
+    </div>
+
+    <nav>
+        <a href="index.html">Início</a>
+        <a href="necessidades.html">Necessidades</a>
+        <a href="lazer.html">Lazer</a>
+        <a href="compras.html">Compras</a>
+        <a href="gastos.html">Gastos</a>
+        <a href="poupanca.html">Poupança</a>
+        <a href="investimentos.html">Investimentos</a>
+        <a href="metas.html">Metas</a>
+    </nav>
+
+</header>
+
+
+<main>
+
+<section class="hero">
+
+    <div class="hero-text">
+
+        <div class="tag">
+            CONTROLE FINANCEIRO
+        </div>
+
+        <h1>
+            Controle seus
+            <span>gastos.</span>
+        </h1>
+
+        <p>
+            Informe sua renda e seus principais gastos
+            para visualizar como seu dinheiro está sendo utilizado.
+        </p>
+
+        <a href="#controle" class="button">
+            COMEÇAR →
+        </a>
+
+    </div>
+
+    <div class="hero-card">
+
+        <div class="money-icon">
+            🧾
+        </div>
+
+        <h2>
+            GASTOS
+        </h2>
+
+        <p>
+            Organize suas despesas e acompanhe seu orçamento.
+        </p>
+
+    </div>
+
+</section>
+
+
+<section id="controle" class="section">
+
+    <div class="section-title">
+        <span>01</span>
+
+        <h2>
+            Sua situação financeira
+        </h2>
+    </div>
+
+
+    <div class="cards">
+
+        <div class="card light">
+
+            <div class="icon">💰</div>
+
+            <h3>
+                Renda principal
+            </h3>
+
+            <input
+                type="number"
+                id="income"
+                placeholder="Ex: 3000"
+                min="0"
+            >
+
+        </div>
+
+
+        <div class="card light">
+
+            <div class="icon">💵</div>
+
+            <h3>
+                Outras rendas
+            </h3>
+
+            <input
+                type="number"
+                id="otherIncome"
+                placeholder="Ex: 500"
+                min="0"
+            >
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="section dark">
+
+    <div class="section-title">
+
+        <span>02</span>
+
+        <h2>
+            Seus gastos
+        </h2>
+
+    </div>
+
+
+    <div class="cards">
+
+        <div class="card">
+
+            <div class="icon">🏠</div>
+
+            <h3>Moradia</h3>
+
+            <input
+                type="number"
+                id="housing"
+                placeholder="R$ 0"
+                min="0"
+            >
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="icon">🍎</div>
+
+            <h3>Alimentação</h3>
+
+            <input
+                type="number"
+                id="food"
+                placeholder="R$ 0"
+                min="0"
+            >
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="icon">🚌</div>
+
+            <h3>Transporte</h3>
+
+            <input
+                type="number"
+                id="transport"
+                placeholder="R$ 0"
+                min="0"
+            >
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="icon">💡</div>
+
+            <h3>Contas</h3>
+
+            <input
+                type="number"
+                id="bills"
+                placeholder="R$ 0"
+                min="0"
+            >
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="icon">🎮</div>
+
+            <h3>Lazer</h3>
+
+            <input
+                type="number"
+                id="leisure"
+                placeholder="R$ 0"
+                min="0"
+            >
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="icon">🛒</div>
+
+            <h3>Compras</h3>
+
+            <input
+                type="number"
+                id="shopping"
+                placeholder="R$ 0"
+                min="0"
+            >
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="icon">📚</div>
+
+            <h3>Educação</h3>
+
+            <input
+                type="number"
+                id="education"
+                placeholder="R$ 0"
+                min="0"
+            >
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="icon">📦</div>
+
+            <h3>Outros</h3>
+
+            <input
+                type="number"
+                id="otherExpenses"
+                placeholder="R$ 0"
+                min="0"
+            >
+
+        </div>
+
+    </div>
+
+
+    <div style="text-align:center; margin-top:40px;">
+
+        <button
+            class="button"
+            onclick="analyzeBudget()"
+        >
+            ANALISAR MEUS GASTOS →
+        </button>
+
+    </div>
+
+</section>
+
+
+<section class="section">
+
+    <div class="section-title">
+
+        <span>03</span>
+
+        <h2>
+            Resumo
+        </h2>
+
+    </div>
+
+
+    <div class="cards">
+
+        <div class="card light">
+
+            <div class="icon">💰</div>
+
+            <h3>Renda</h3>
+
+            <p id="metricIncome">
+                R$ 0,00
+            </p>
+
+        </div>
+
+
+        <div class="card light">
+
+            <div class="icon">🧾</div>
+
+            <h3>Gastos</h3>
+
+            <p id="metricExpenses">
+                R$ 0,00
+            </p>
+
+        </div>
+
+
+        <div class="card light">
+
+            <div class="icon">💵</div>
+
+            <h3>Sobra</h3>
+
+            <p id="metricBalance">
+                R$ 0,00
+            </p>
+
+        </div>
+
+
+        <div class="card light">
+
+            <div class="icon">📊</div>
+
+            <h3>Taxa de sobra</h3>
+
+            <p id="metricSaving">
+                0%
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="section dark">
+
+    <div class="section-title">
+
+        <span>04</span>
+
+        <h2>
+            Distribuição dos gastos
+        </h2>
+
+    </div>
+
+
+    <div class="budget-layout">
+
+        <div class="budget-box">
+
+            <canvas id="expenseChart"></canvas>
+
+        </div>
+
+
+        <div
+            class="budget-box"
+            id="distributionText"
+        >
+
+            <h3>
+                📊 Distribuição
+            </h3>
+
+            <p>
+                Preencha os valores e clique em
+                "Analisar meus gastos".
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="section">
+
+    <div class="section-title">
+
+        <span>05</span>
+
+        <h2>
+            Diagnóstico
+        </h2>
+
+    </div>
+
+
+    <div id="diagnosis">
+
+        <div class="info">
+
+            <h3>
+                🔎 Análise financeira
+            </h3>
+
+            <p>
+                Preencha seus dados para receber
+                uma análise do orçamento.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="section dark">
+
+    <div class="section-title">
+
+        <span>06</span>
+
+        <h2>
+            Assistente EconoMONEY
+        </h2>
+
+    </div>
+
+
+    <div class="budget-box">
+
+        <h3>
+            🤖 Pergunte ao assistente
+        </h3>
+
+        <input
+            type="text"
+            id="assistantQuestion"
+            placeholder="Ex: Como posso organizar meus gastos?"
+            style="width:100%; margin-top:20px;"
+        >
+
+        <button
+            class="button"
+            onclick="financialAssistant()"
+            style="margin-top:20px;"
+        >
+            PERGUNTAR →
+        </button>
+
+
+        <div
+            id="assistantResult"
+            style="margin-top:30px;"
+        ></div>
+
+    </div>
+
+</section>
+
+
+<section
+    class="section"
+    style="text-align:center"
+>
+
+    <h2>
+        Organizar é entender para onde seu dinheiro está indo. 💰
+    </h2>
+
+    <p style="margin-top:15px">
+
+        Use o controle de gastos sempre que quiser
+        acompanhar sua situação financeira.
+
+    </p>
+
+    <a
+        href="index.html"
+        class="button"
+    >
+        ← VOLTAR AO INÍCIO
+    </a>
+
+</section>
+
+</main>
+
+
+<footer>
+
+    <h2>
+        💰 ECONOMONEY
+    </h2>
+
+    <p>
+        Educação financeira de forma simples.
+    </p>
+
+    <p class="copyright">
+        © 2026 EconoMONEY
+    </p>
+
+</footer>
+
+
+<script>
+
+/* =========================================================
+   ECONOMONEY — CONTROLE DE GASTOS
+========================================================= */
+
+let expenseChart = null;
+
+
+/* =========================
+   UTILIDADES
+========================= */
+
+function num(id){
+
+    const element =
+        document.getElementById(id);
+
+    if(!element){
+        return 0;
+    }
+
+    const value =
+        parseFloat(element.value);
+
+    return Number.isFinite(value)
+        ? value
+        : 0;
+}
+
+
+function money(value){
+
+    return Number(value || 0)
+        .toLocaleString(
+            "pt-BR",
+            {
+                style:"currency",
+                currency:"BRL"
+            }
+        );
+}
+
+
+function pct(value){
+
+    return Number(value || 0)
+        .toFixed(1) + "%";
+}
+
+
+function escapeHTML(text){
+
+    const div =
+        document.createElement("div");
+
+    div.textContent = text;
+
+    return div.innerHTML;
+}
+
+
+function normalize(text){
+
+    return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(
+            /[\u0300-\u036f]/g,
+            ""
+        );
+}
+
+
+function has(text,words){
+
+    return words.some(
+        word =>
+            text.includes(
+                normalize(word)
+            )
+    );
+}
+
+
+/* =========================
+   RENDA
+========================= */
+
+function getIncome(){
+
+    return (
+        num("income") +
+        num("otherIncome")
+    );
+}
+
+
+/* =========================
+   GASTOS
+========================= */
+
+function getExpenses(){
+
+    return {
+
+        "Moradia":
+            num("housing"),
+
+        "Alimentação":
+            num("food"),
+
+        "Transporte":
+            num("transport"),
+
+        "Contas":
+            num("bills"),
+
+        "Lazer":
+            num("leisure"),
+
+        "Compras":
+            num("shopping"),
+
+        "Educação":
+            num("education"),
+
+        "Outros":
+            num("otherExpenses")
+
+    };
+}
+
+
+function getTotalExpenses(){
+
+    return Object.values(
+        getExpenses()
+    ).reduce(
+        (total,value) =>
+            total + value,
+        0
+    );
+}
+
+
+function getFinancialData(){
+
+    const income =
+        getIncome();
+
+    const expenses =
+        getTotalExpenses();
+
+    const balance =
+        income - expenses;
+
+    const savingRate =
+        income > 0
+            ? balance / income * 100
+            : 0;
+
+    const expensesData =
+        getExpenses();
+
+    const categories =
+        Object.entries(expensesData)
+            .filter(
+                ([name,value]) =>
+                    value > 0
+            )
+            .sort(
+                (a,b) =>
+                    b[1] - a[1]
+            );
+
+    return {
+
+        income,
+        expenses,
+        balance,
+        savingRate,
+        categories,
+        biggest:
+            categories[0] || null
+
+    };
+}
+
+
+/* =========================
+   ANÁLISE
+========================= */
+
+function analyzeBudget(){
+
+    const data =
+        getFinancialData();
+
+    document.getElementById(
+        "metricIncome"
+    ).textContent =
+        money(data.income);
+
+    document.getElementById(
+        "metricExpenses"
+    ).textContent =
+        money(data.expenses);
+
+    document.getElementById(
+        "metricBalance"
+    ).textContent =
+        money(data.balance);
+
+    document.getElementById(
+        "metricSaving"
+    ).textContent =
+        pct(data.savingRate);
+
+    createChart();
+
+    showDistribution();
+
+    showDiagnosis();
+}
+
+
+/* =========================
+   GRÁFICO
+========================= */
+
+function createChart(){
+
+    const data =
+        getExpenses();
+
+    const canvas =
+        document.getElementById(
+            "expenseChart"
+        );
+
+    if(!canvas){
+        return;
+    }
+
+    if(
+        typeof Chart ===
+        "undefined"
+    ){
+        return;
+    }
+
+    const ctx =
+        canvas.getContext("2d");
+
+    if(expenseChart){
+
+        expenseChart.destroy();
+
+    }
+
+    const values =
+        Object.values(data);
+
+    const hasExpenses =
+        values.some(
+            value => value > 0
+        );
+
+    if(!hasExpenses){
+
+        return;
+    }
+
+    expenseChart =
+        new Chart(
+            ctx,
+            {
+
+                type:"doughnut",
+
+                data:{
+
+                    labels:
+                        Object.keys(data),
+
+                    datasets:[
+
+                        {
+                            data:values
+                        }
+
+                    ]
+
+                },
+
+                options:{
+
+                    responsive:true,
+
+                    plugins:{
+
+                        legend:{
+
+                            labels:{
+                                color:"#ffffff"
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+        );
+}
+
+
+/* =========================
+   DISTRIBUIÇÃO
+========================= */
+
+function showDistribution(){
+
+    const data =
+        getFinancialData();
+
+    let html =
+        "<h3>📊 Distribuição dos gastos</h3>";
+
+    if(
+        data.categories.length === 0
+    ){
+
+        html += `
+            <p>
+                Nenhum gasto foi informado ainda.
+            </p>
+        `;
+
+    }else{
+
+        data.categories.forEach(
+            ([name,value]) => {
+
+                const percentage =
+                    data.income > 0
+                        ? value /
+                          data.income *
+                          100
+                        : 0;
+
+                html += `
+                    <p>
+                        <b>
+                            ${escapeHTML(name)}
+                        </b>
+                        —
+                        ${money(value)}
+                        (${percentage.toFixed(1)}%
+                        da renda)
+                    </p>
+                `;
+
+            }
+        );
+
+    }
+
+    document.getElementById(
+        "distributionText"
+    ).innerHTML = html;
+}
+
+
+/* =========================
+   DIAGNÓSTICO
+========================= */
+
+function showDiagnosis(){
+
+    const data =
+        getFinancialData();
+
+    let html = "";
+
+    if(data.income <= 0){
+
+        html = `
+
+            <div class="warning">
+
+                <b>
+                    ⚠️ Informe sua renda.
+                </b>
+
+                <p>
+                    Preencha sua renda para
+                    calcular o orçamento.
+                </p>
+
+            </div>
+
+        `;
+
+    }else if(data.balance < 0){
+
+        html = `
+
+            <div class="danger">
+
+                <b>
+                    🚨 Os gastos ultrapassam a renda.
+                </b>
+
+                <p>
+                    Diferença:
+                    <b>
+                        ${money(
+                            Math.abs(
+                                data.balance
+                            )
+                        )}
+                    </b>
+                </p>
+
+                <p>
+                    Revise as despesas informadas
+                    e o planejamento financeiro.
+                </p>
+
+            </div>
+
+        `;
+
+    }else if(data.savingRate < 10){
+
+        html = `
+
+            <div class="warning">
+
+                <b>
+                    ⚠️ A margem financeira está apertada.
+                </b>
+
+                <p>
+                    Sobra:
+                    <b>
+                        ${pct(
+                            data.savingRate
+                        )}
+                    </b>
+                    da renda.
+                </p>
+
+            </div>
+
+        `;
+
+    }else{
+
+        html = `
+
+            <div class="success">
+
+                <b>
+                    🟢 Existe uma sobra financeira.
+                </b>
+
+                <p>
+                    Sua sobra é:
+                    <b>
+                        ${money(
+                            data.balance
+                        )}
+                    </b>
+                </p>
+
+                <p>
+                    Essa sobra pode ser relacionada
+                    a metas, reserva ou compras planejadas.
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+
+    if(data.biggest){
+
+        const [
+            name,
+            value
+        ] = data.biggest;
+
+        const percentage =
+            data.income > 0
+                ? value /
+                  data.income *
+                  100
+                : 0;
+
+        html += `
+
+            <div class="info">
+
+                <b>
+                    🔎 Maior categoria
+                </b>
+
+                <p>
+                    <b>
+                        ${escapeHTML(name)}
+                    </b>
+                    representa aproximadamente
+                    <b>
+                        ${percentage.toFixed(1)}%
+                    </b>
+                    da renda.
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+    document.getElementById(
+        "diagnosis"
+    ).innerHTML = html;
+}
+
+
+/* =========================
+   ASSISTENTE
+========================= */
+
+function financialAssistant(){
+
+    const input =
+        document.getElementById(
+            "assistantQuestion"
+        );
+
+    const result =
+        document.getElementById(
+            "assistantResult"
+        );
+
+    const question =
+        input.value.trim();
+
+    if(!question){
+
+        result.innerHTML = `
+
+            <div class="warning">
+
+                <b>
+                    💬 Digite uma pergunta.
+                </b>
+
+                <p>
+                    Exemplo:
+                    "Como posso economizar?"
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+    const data =
+        getFinancialData();
+
+    const q =
+        normalize(question);
+
+    let response = `
+
+        <div class="info">
+
+            <h3>
+                🤖 Assistente EconoMONEY
+            </h3>
+
+            <p>
+                <b>
+                    Você perguntou:
+                </b>
+                ${escapeHTML(question)}
+            </p>
+
+    `;
+
+
+    if(
+        has(q,[
+            "gasto",
+            "gastos",
+            "orcamento",
+            "dinheiro"
+        ])
+    ){
+
+        response += `
+
+            <hr>
+
+            <p>
+                💰 Renda:
+                <b>
+                    ${money(data.income)}
+                </b>
+            </p>
+
+            <p>
+                🧾 Gastos:
+                <b>
+                    ${money(data.expenses)}
+                </b>
+            </p>
+
+            <p>
+                💵 Sobra:
+                <b>
+                    ${money(data.balance)}
+                </b>
+            </p>
+
+        `;
+
+    }
+
+
+    if(
+        has(q,[
+            "economizar",
+            "economia",
+            "poupar"
+        ])
+    ){
+
+        response += `
+
+            <hr>
+
+            <h3>
+                💰 Como economizar
+            </h3>
+
+            <p>
+                Separe necessidades de desejos,
+                acompanhe seus gastos e procure
+                identificar despesas que podem
+                ser reduzidas sem prejudicar
+                necessidades importantes.
+            </p>
+
+            <p>
+                Sua sobra atual é:
+                <b>
+                    ${money(data.balance)}
+                </b>
+            </p>
+
+        `;
+
+    }
+
+
+    if(
+        has(q,[
+            "compra",
+            "comprar",
+            "celular",
+            "pc",
+            "computador"
+        ])
+    ){
+
+        response += `
+
+            <hr>
+
+            <h3>
+                🛒 Antes de comprar
+            </h3>
+
+            <ul>
+
+                <li>
+                    É necessidade ou desejo?
+                </li>
+
+                <li>
+                    Cabe no orçamento?
+                </li>
+
+                <li>
+                    A compra atrapalha alguma meta?
+                </li>
+
+                <li>
+                    Existe uma opção mais barata?
+                </li>
+
+            </ul>
+
+        `;
+
+    }
+
+
+    if(
+        has(q,[
+            "meta",
+            "objetivo"
+        ])
+    ){
+
+        response += `
+
+            <hr>
+
+            <h3>
+                🎯 Meta financeira
+            </h3>
+
+            <p>
+                Defina um valor,
+                um prazo e quanto será
+                necessário reservar por período.
+            </p>
+
+        `;
+
+    }
+
+
+    if(
+        has(q,[
+            "investimento",
+            "investir"
+        ])
+    ){
+
+        response += `
+
+            <hr>
+
+            <h3>
+                📈 Investimentos
+            </h3>
+
+            <p>
+                Antes de analisar um investimento,
+                entenda seu funcionamento,
+                riscos, prazo, liquidez,
+                custos e possíveis impostos.
+            </p>
+
+        `;
+
+    }
+
+
+    if(
+        has(q,[
+            "inflacao"
+        ])
+    ){
+
+        response += `
+
+            <hr>
+
+            <h3>
+                📈 Inflação
+            </h3>
+
+            <p>
+                Inflação é o aumento generalizado
+                dos preços de bens e serviços
+                ao longo do tempo.
+            </p>
+
+        `;
+
+    }
+
+
+    if(
+        has(q,[
+            "juros"
+        ])
+    ){
+
+        response += `
+
+            <hr>
+
+            <h3>
+                💹 Juros
+            </h3>
+
+            <p>
+                Juros representam o custo ou
+                rendimento relacionado ao dinheiro
+                durante determinado período.
+            </p>
+
+        `;
+
+    }
+
+
+    response += `
+
+        </div>
+
+    `;
+
+    result.innerHTML =
+        response;
+}
+
+</script>
+
+</body>
+</html>
